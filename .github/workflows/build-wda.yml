@@ -1,4 +1,4 @@
-name: Build Full WebDriverAgent for iOS 26.5
+name: Build Full WDA
 
 on:
   workflow_dispatch:
@@ -10,22 +10,14 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-latest
 
     steps:
-      - name: Checkout WebDriverAgent
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           repository: appium/WebDriverAgent
           ref: master
-
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-
-      - name: Update Bundle ID
-        run: |
-          sed -i '' "s/com.facebook.WebDriverAgentRunner/${{ inputs.bundle_id }}/g" WebDriverAgent.xcodeproj/project.pbxproj
-          sed -i '' "s/com.facebook.WebDriverAgent/${{ inputs.bundle_id }}/g" WebDriverAgent.xcodeproj/project.pbxproj
 
       - name: Build
         run: |
@@ -46,9 +38,8 @@ jobs:
           cp -r DerivedData/Build/Products/Debug-iphoneos/WebDriverAgentRunner-Runner.app Payload/WebDriverAgentRunner.app
           ditto -c -k --sequesterRsrc --keepParent Payload WebDriverAgentRunner.ipa
 
-      - name: Upload IPA
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: WebDriverAgentRunner.ipa
           path: WebDriverAgentRunner.ipa
-          retention-days: 7
