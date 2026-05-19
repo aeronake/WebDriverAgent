@@ -1,0 +1,54 @@
+name: Build Full WebDriverAgent for iOS 26.5
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_id:
+        description: 'Bundle ID'
+        required: true
+        default: 'com.aeronaake.wda'
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout WebDriverAgent
+        uses: actions/checkout@v4
+        with:
+          repository: appium/WebDriverAgent
+          ref: master
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Update Bundle ID
+        run: |
+          sed -i '' "s/com.facebook.WebDriverAgentRunner/${{ inputs.bundle_id }}/g" WebDriverAgent.xcodeproj/project.pbxproj
+          sed -i '' "s/com.facebook.WebDriverAgent/${{ inputs.bundle_id }}/g" WebDriverAgent.xcodeproj/project.pbxproj
+
+      - name: Build
+        run: |
+          xcodebuild build-for-testing \
+            -project WebDriverAgent.xcodeproj \
+            -scheme WebDriverAgentRunner \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath DerivedData \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=16.0
+
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -r DerivedData/Build/Products/Debug-iphoneos/WebDriverAgentRunner-Runner.app Payload/WebDriverAgentRunner.app
+          ditto -c -k --sequesterRsrc --keepParent Payload WebDriverAgentRunner.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebDriverAgentRunner.ipa
+          path: WebDriverAgentRunner.ipa
+          retention-days: 7
