@@ -1,4 +1,4 @@
-name: Build Full WDA
+name: Build Stable WDA
 
 on:
   workflow_dispatch:
@@ -13,8 +13,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: appium/WebDriverAgent
           ref: master
@@ -30,16 +29,15 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            IPHONEOS_DEPLOYMENT_TARGET=16.0
+            GCC_TREAT_WARNINGS_AS_ERRORS=NO
 
-      - name: Create IPA
+      - name: Package IPA
         run: |
           mkdir -p Payload
           cp -r DerivedData/Build/Products/Debug-iphoneos/WebDriverAgentRunner-Runner.app Payload/WebDriverAgentRunner.app
           ditto -c -k --sequesterRsrc --keepParent Payload WebDriverAgentRunner.ipa
 
-      - name: Upload
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: WebDriverAgentRunner.ipa
           path: WebDriverAgentRunner.ipa
